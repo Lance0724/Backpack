@@ -1,6 +1,13 @@
 #include <Arduino.h>
-#include <espnow.h>
-#include <ESP8266WiFi.h>
+
+#if defined(PLATFORM_ESP8266)
+  #include <espnow.h>
+  #include <ESP8266WiFi.h>
+#elif defined(PLATFORM_ESP32)
+  #include <esp_now.h>
+  #include <esp_wifi.h>
+  #include <WiFi.h>
+#endif
 
 #include "msp.h"
 #include "msptypes.h"
@@ -13,6 +20,10 @@
 #include "devWIFI.h"
 #include "devButton.h"
 #include "devLED.h"
+
+#if defined(OLED)
+  #include <U8g2lib.h>
+#endif
 
 /////////// GLOBALS ///////////
 
@@ -29,6 +40,10 @@ unsigned long rebootTime = 0;
 bool cacheFull = false;
 bool sendCached = false;
 
+#if defined(OLED)
+  U8G2_SH1107_128X80_F_HW_I2C u8g2(U8G2_R1, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ 22, /* data=*/21);
+#endif 
+
 device_t *ui_devices[] = {
 #ifdef PIN_LED
   &LED_device,
@@ -38,6 +53,13 @@ device_t *ui_devices[] = {
 #endif
   &WIFI_device,
 };
+
+#if defined(PLATFORM_ESP32)
+// This seems to need to be global, as per this page,
+// otherwise we get errors about invalid peer:
+// https://rntlab.com/question/espnow-peer-interface-is-invalid/
+esp_now_peer_info_t peerInfo;
+#endif
 
 /////////// CLASS OBJECTS ///////////
 
@@ -74,7 +96,11 @@ void ProcessMSPPacketFromPeer(mspPacket_t *packet)
 }
 
 // espnow on-receive callback
+#if defined(PLATFORM_ESP8266)
 void OnDataRecv(uint8_t * mac_addr, uint8_t *data, uint8_t data_len)
+#elif defined(PLATFORM_ESP32)
+void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int data_len)
+#endif
 {
   DBGLN("ESP NOW DATA:");
   for(int i = 0; i < data_len; i++)
@@ -198,7 +224,11 @@ void SetSoftMACAddress()
   WiFi.disconnect();
 
   // Soft-set the MAC address to the passphrase UID for binding
-  wifi_set_macaddr(STATION_IF, broadcastAddress);
+  #if defined(PLATFORM_ESP8266)
+    wifi_set_macaddr(STATION_IF, broadcastAddress);
+  #elif defined(PLATFORM_ESP32)
+    esp_wifi_set_mac(WIFI_IF_STA, broadcastAddress);
+  #endif
 }
 
 #if defined(PLATFORM_ESP8266)
@@ -257,8 +287,19 @@ void setup()
       rebootTime = millis();
     }
 
-    esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-    esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+    #if defined(PLATFORM_ESP8266)
+      esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+      esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+    #elif defined(PLATFORM_ESP32)
+      memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+      peerInfo.channel = 0;
+      peerInfo.encrypt = false;
+      if (esp_now_add_peer(&peerInfo) != ESP_OK)
+      {
+        DBGLN("ESP-NOW failed to add peer");
+        return;
+      }
+    #endif
     esp_now_register_recv_cb(OnDataRecv);
   }
 
@@ -267,11 +308,28 @@ void setup()
   {
     connectionState = running;
   }
+
+  #if defined(OLED)
+    u8g2.begin();
+    u8g2.enableUTF8Print(); // enable UTF8 support for the Arduino print() function
+  #endif
   DBGLN("Setup completed");
 }
 
 void loop()
 {
+  #if defined(OLED)
+    // u8g2.setFont(u8g2_font_unifont_t_chinese2);  // use chinese2 for all the glyphs of "你好世界"
+    // u8g2.setFontDirection(0);
+    // u8g2.clearBuffer();
+    // u8g2.setCursor(0, 15);
+    // u8g2.print("Hello World!4");
+    // u8g2.setCursor(0, 40);
+    // u8g2.print("你好世界4");        // Chinese "Hello World"
+    // u8g2.setCursor(0, 65);
+    // u8g2.print("你好世界4");        // Chinese "Hello World"
+    // u8g2.sendBuffer();
+  #endif
   uint32_t now = millis();
 
   devicesUpdate(now);
