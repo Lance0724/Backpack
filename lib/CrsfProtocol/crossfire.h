@@ -67,3 +67,5 @@ struct CrossfireSensor {
   const TelemetryUnit unit;
   const uint8_t precision;
 };
+
+void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData);

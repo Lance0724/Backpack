@@ -27,6 +27,7 @@
 
 #ifdef RELAY
   #include "telemetry.h"
+  #include "crossfire.h"
 #endif
 
 /////////// GLOBALS ///////////
@@ -50,6 +51,7 @@ bool sendCached = false;
 
 #ifdef RELAY
 Telemetry telemetry;
+Stream *_stream;
 #endif
 
 device_t *ui_devices[] = {
@@ -265,7 +267,12 @@ void setup()
 #ifdef AXIS_THOR_TX_BACKPACK
   Serial.begin(420000);
 #else
-  Serial.begin(460800);
+  #ifndef RELAY
+    Serial.begin(460800);
+  #else
+    Serial1.begin(460800);
+    _stream = &Serial1;
+  #endif
 #endif
 
   eeprom.Begin();
@@ -320,23 +327,36 @@ void setup()
   #ifdef OLED
     u8g2.begin();
     u8g2.enableUTF8Print(); // enable UTF8 support for the Arduino print() function
+   
+    u8g2.setFont(u8g2_font_unifont_t_chinese2); // use chinese2 for all the glyphs of "你好世界"
+    u8g2.setFontDirection(0);
+    u8g2.clearBuffer();
+
+    u8g2.setCursor(0, 15);
+    u8g2.print("init...");
+
+    // u8g2.clearBuffer();
+    u8g2.setContrast(150);
+
   #endif
   DBGLN("Setup completed");
 }
 
+#ifdef OLED
+void ClearBox(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h)
+{
+    uint8_t color = u8g2.getDrawColor();
+    u8g2.setDrawColor(0);
+    u8g2.drawBox(x, y, w, h);
+    u8g2.setDrawColor(color);
+}
+#endif
+
 void loop()
 {
   #ifdef OLED
-    // u8g2.setFont(u8g2_font_unifont_t_chinese2);  // use chinese2 for all the glyphs of "你好世界"
-    // u8g2.setFontDirection(0);
-    // u8g2.clearBuffer();
     // u8g2.setCursor(0, 15);
-    // u8g2.print("Hello World!4");
-    // u8g2.setCursor(0, 40);
-    // u8g2.print("你好世界4");        // Chinese "Hello World"
-    // u8g2.setCursor(0, 65);
-    // u8g2.print("你好世界4");        // Chinese "Hello World"
-    // u8g2.sendBuffer();
+    // u8g2.print("Count:");
   #endif
   uint32_t now = millis();
 
@@ -354,12 +374,13 @@ void loop()
     return;
   }
 
-  if (Serial.available())
-  {
 #ifdef RELAY
+  if (_stream->available())
+  {
+
     do {
-      telemetry.RXhandleUARTin(Serial.read());
-    } while (Serial.available());
+      telemetry.RXhandleUARTin(_stream->read());
+    } while (_stream->available());
 
     uint8_t *nextPayload = 0;
     uint8_t nextPlayloadSize = 0;
@@ -367,8 +388,22 @@ void loop()
     {
         // nextPlayloadSize
         // nextPayload
+        crossfireProcessData(nextPlayloadSize, nextPayload);
+        #ifdef OLED
+        ClearBox(0, 55, 90, 60);
+        u8g2.setCursor(0, 15);
+        u8g2.print("count");
+        u8g2.print(telemetry.ReceivedPackagesCount());
+        #endif
     }
+  }
+  
+  #ifdef OLED
+    u8g2.sendBuffer();
+  #endif
 #else
+  if (Serial.available())
+  {
     uint8_t c = Serial.read();
     if (msp.processReceivedByte(c))
     {
@@ -376,11 +411,8 @@ void loop()
       ProcessMSPPacketFromTX(msp.getReceivedPacket());
       msp.markPacketReceived();
     }
-#endif
   }
 
-#ifdef RELAY
-#else
   if (cacheFull && sendCached)
   {
     SendCachedMSP();

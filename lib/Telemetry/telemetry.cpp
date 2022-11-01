@@ -13,6 +13,27 @@ using namespace std;
 #include "CRSF.h"
 #else
 GENERIC_CRC8 crsf_crc(CRSF_CRC_POLY);
+
+int32_t telemetry_lat = 0;
+int32_t telemetry_lon = 0;
+int16_t telemetry_alt = 0;
+int16_t telemetry_sats = 0;
+int32_t telemetry_time = 0;
+int32_t telemetry_date = 0;
+int16_t telemetry_age = 0;
+
+
+uint8_t telemetry_failed_cs = 0;
+
+float telemetry_course = 0.0f;
+float telemetry_speed = 0.0f;
+float telemetry_declination = 0.0f;
+float telemetry_hdop = 0.0f;
+
+float telemetry_pitch = 0.0f;
+float telemetry_roll = 0.0f;
+float telemetry_yaw = 0.0f;
+
 #endif 
 
 Telemetry::Telemetry()
@@ -143,7 +164,7 @@ bool Telemetry::RXhandleUARTin(uint8_t data)
 {
     switch(telemetry_state) {
         case TELEMETRY_IDLE:
-            if (data == CRSF_ADDRESS_CRSF_RECEIVER || data == CRSF_SYNC_BYTE)
+            if (data == CRSF_ADDRESS_RADIO_TRANSMITTER || data == CRSF_SYNC_BYTE)
             {
                 currentTelemetryByte = 0;
                 telemetry_state = RECEIVING_LENGTH;
