@@ -25,7 +25,7 @@ static void shortPress()
 
 static void initialize()
 {
-    button.OnShortPress = shortPress;
+    button.OnLongPress = shortPress;
 }
 
 static int start()

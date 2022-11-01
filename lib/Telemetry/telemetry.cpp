@@ -7,9 +7,13 @@
 using namespace std;
 #endif
 
-#if CRSF_RX_MODULE
+#if CRSF_RX_MODULE || RELAY
 
+#ifndef RELAY
 #include "CRSF.h"
+#else
+GENERIC_CRC8 crsf_crc(CRSF_CRC_POLY);
+#endif 
 
 Telemetry::Telemetry()
 {

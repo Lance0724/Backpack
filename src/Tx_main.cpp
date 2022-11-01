@@ -21,8 +21,12 @@
 #include "devButton.h"
 #include "devLED.h"
 
-#if defined(OLED)
+#ifdef OLED
   #include <U8g2lib.h>
+#endif
+
+#ifdef RELAY
+  #include "telemetry.h"
 #endif
 
 /////////// GLOBALS ///////////
@@ -40,9 +44,13 @@ unsigned long rebootTime = 0;
 bool cacheFull = false;
 bool sendCached = false;
 
-#if defined(OLED)
+#ifdef OLED
   U8G2_SH1107_128X80_F_HW_I2C u8g2(U8G2_R1, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ 22, /* data=*/21);
 #endif 
+
+#ifdef RELAY
+Telemetry telemetry;
+#endif
 
 device_t *ui_devices[] = {
 #ifdef PIN_LED
@@ -309,7 +317,7 @@ void setup()
     connectionState = running;
   }
 
-  #if defined(OLED)
+  #ifdef OLED
     u8g2.begin();
     u8g2.enableUTF8Print(); // enable UTF8 support for the Arduino print() function
   #endif
@@ -318,7 +326,7 @@ void setup()
 
 void loop()
 {
-  #if defined(OLED)
+  #ifdef OLED
     // u8g2.setFont(u8g2_font_unifont_t_chinese2);  // use chinese2 for all the glyphs of "你好世界"
     // u8g2.setFontDirection(0);
     // u8g2.clearBuffer();
@@ -348,19 +356,35 @@ void loop()
 
   if (Serial.available())
   {
-    uint8_t c = Serial.read();
+#ifdef RELAY
+    do {
+      telemetry.RXhandleUARTin(Serial.read());
+    } while (Serial.available());
 
+    uint8_t *nextPayload = 0;
+    uint8_t nextPlayloadSize = 0;
+    if (telemetry.GetNextPayload(&nextPlayloadSize, &nextPayload))
+    {
+        // nextPlayloadSize
+        // nextPayload
+    }
+#else
+    uint8_t c = Serial.read();
     if (msp.processReceivedByte(c))
     {
       // Finished processing a complete packet
       ProcessMSPPacketFromTX(msp.getReceivedPacket());
       msp.markPacketReceived();
     }
+#endif
   }
 
+#ifdef RELAY
+#else
   if (cacheFull && sendCached)
   {
     SendCachedMSP();
     sendCached = false;
   }
+#endif
 }
