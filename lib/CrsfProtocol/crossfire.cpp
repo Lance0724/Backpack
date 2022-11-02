@@ -16,6 +16,9 @@ extern int32_t telemetry_time;
 extern int32_t telemetry_date;
 extern int16_t telemetry_age;
 
+extern int16_t telemetry_voltage;
+extern float telemetry_current;
+
 
 extern uint8_t telemetry_failed_cs;
 
@@ -81,13 +84,16 @@ bool getCrossfireTelemetryValue(uint8_t index, int32_t & value, uint8_t *payload
   }
   return result;
 }
+
 #ifdef OLED
 extern void ClearBox(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h);
 #endif
 
 void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadData)
 {
-  uint8_t * rxBuffer = payloadData;
+  uint8_t posCount = 0;
+  uint8_t gotAlt = 0;
+  uint8_t *rxBuffer = payloadData;
   uint8_t &rxBufferCount = nextPayloadSize;
 
   uint8_t crsfPayloadLen = rxBuffer[1];
@@ -100,18 +106,53 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
       break;
 
     case CRSF_FRAMETYPE_GPS:
-      // if (getCrossfireTelemetryValue<4>(3, value, payloadData))
-      //   processCrossfireTelemetryValue(GPS_LATITUDE_INDEX, value/10);
-      // if (getCrossfireTelemetryValue<4>(7, value, payloadData))
-      //   processCrossfireTelemetryValue(GPS_LONGITUDE_INDEX, value/10);
-      // if (getCrossfireTelemetryValue<2>(11, value, payloadData))
-      //   processCrossfireTelemetryValue(GPS_GROUND_SPEED_INDEX, value);
-      // if (getCrossfireTelemetryValue<2>(13, value, payloadData))
-      //   processCrossfireTelemetryValue(GPS_HEADING_INDEX, value);
-      // if (getCrossfireTelemetryValue<2>(15, value, payloadData))
-      //   processCrossfireTelemetryValue(GPS_ALTITUDE_INDEX,  value - 1000);
-      // if (getCrossfireTelemetryValue<1>(17, value, payloadData))
-      //   processCrossfireTelemetryValue(GPS_SATELLITES_INDEX, value);
+      if (getCrossfireTelemetryValue<4>(3, value, payloadData))
+      {
+        telemetry_lat = value / 10;
+        if (posCount == 0) {
+          posCount++;
+        }
+      }
+      if (getCrossfireTelemetryValue<4>(7, value, payloadData))
+      {
+        telemetry_lon = value / 10;
+        if (posCount == 0) {
+          posCount++;
+        }
+      }
+      if (getCrossfireTelemetryValue<2>(11, value, payloadData))
+      {
+        telemetry_speed = (float)value;
+      }
+      if (getCrossfireTelemetryValue<2>(13, value, payloadData))
+      {
+        telemetry_course = (float)value;
+      }
+      if (getCrossfireTelemetryValue<2>(15, value, payloadData))
+      {
+        telemetry_alt = (uint16_t) (value - 1000);
+        gotAlt = 1;
+      }
+      if (getCrossfireTelemetryValue<1>(17, value, payloadData))
+      {
+        telemetry_sats = (uint16_t)value;
+      }
+      break;
+    case CRSF_FRAMETYPE_BATTERY_SENSOR:
+      if (getCrossfireTelemetryValue<2>(3, value, payloadData)){
+        telemetry_voltage = (uint16_t)value;
+      }
+      if (getCrossfireTelemetryValue<2>(5, value, payloadData)){
+        telemetry_current = (float)value;
+
+      }
+      if (getCrossfireTelemetryValue<3>(7, value, payloadData)){
+        // processCrossfireTelemetryValue(BATT_CAPACITY_INDEX, value);
+      }
+        
+      if (getCrossfireTelemetryValue<1>(10, value, payloadData)){
+        // processCrossfireTelemetryValue(BATT_REMAINING_INDEX, value);
+      }
       break;
 
     case CRSF_FRAMETYPE_BARO_ALTITUDE:
@@ -133,18 +174,6 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
       // {
       //   processCrossfireTelemetryValue(VERTICAL_SPEED_INDEX, value);
       // }
-      break;
-
-
-    case CRSF_FRAMETYPE_BATTERY_SENSOR:
-      // if (getCrossfireTelemetryValue<2>(3, value, payloadData))
-      //   processCrossfireTelemetryValue(BATT_VOLTAGE_INDEX, value);
-      // if (getCrossfireTelemetryValue<2>(5, value, payloadData))
-      //   processCrossfireTelemetryValue(BATT_CURRENT_INDEX, value);
-      // if (getCrossfireTelemetryValue<3>(7, value, payloadData))
-      //   processCrossfireTelemetryValue(BATT_CAPACITY_INDEX, value);
-      // if (getCrossfireTelemetryValue<1>(10, value, payloadData))
-      //   processCrossfireTelemetryValue(BATT_REMAINING_INDEX, value);
       break;
 
     case CRSF_FRAMETYPE_ATTITUDE:

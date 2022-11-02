@@ -25,6 +25,9 @@ int16_t telemetry_age = 0;
 
 uint8_t telemetry_failed_cs = 0;
 
+int16_t telemetry_voltage;
+float telemetry_current;
+
 float telemetry_course = 0.0f;
 float telemetry_speed = 0.0f;
 float telemetry_declination = 0.0f;
