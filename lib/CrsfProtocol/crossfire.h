@@ -68,4 +68,87 @@ struct CrossfireSensor {
   const uint8_t precision;
 };
 
+
+typedef struct _crsf_telemtry_data_s
+{
+    // handled
+    bool telemetry_gotFix;
+    int32_t telemetry_lat;
+    int32_t telemetry_lon;
+    int16_t telemetry_alt;
+    int16_t telemetry_sats;
+
+    // not handle
+    int32_t telemetry_time;
+    int32_t telemetry_date;
+    int16_t telemetry_age;
+
+    uint8_t telemetry_failed_cs;
+
+    int16_t telemetry_voltage;
+    float telemetry_current;
+
+    float telemetry_course;
+    float telemetry_speed;
+    float telemetry_declination;
+    float telemetry_hdop;
+
+    int16_t telemetry_pitch;
+    int16_t telemetry_roll;
+    int16_t telemetry_yaw;
+    char telemtry_flightMode[5];
+
+    char oled_screen[6][30];
+
+    void init()
+    {
+        telemetry_gotFix = false;
+        telemetry_lat = 0;
+        telemetry_lon = 0;
+        telemetry_alt = 0;
+        telemetry_sats = 0;
+
+        // not handle
+        telemetry_time = 0;
+        telemetry_date = 0;
+        telemetry_age = 0;
+
+        telemetry_failed_cs = 0;
+
+        telemetry_voltage;
+        telemetry_current;
+
+        telemetry_course = 0.0f;
+        telemetry_speed = 0.0f;
+        telemetry_declination = 0.0f;
+        telemetry_hdop = 0.0f;
+
+        telemetry_pitch = 0;
+        telemetry_roll = 0;
+        telemetry_yaw = 0;
+        
+        memset(telemtry_flightMode, 0, sizeof(telemtry_flightMode));
+        memset(oled_screen, 0, sizeof(oled_screen));
+    }
+    
+    bool makeScreen(int page)
+    {
+      switch (page)
+      {
+      case 0:
+        // /* code */
+        // break;
+      default:
+        sprintf(oled_screen[0], "Fix:%c Sta:%d Vol%d", telemetry_gotFix?'Y':'N',telemetry_sats, telemetry_voltage);
+        sprintf(oled_screen[1], "Lat:%.4f ", telemetry_lat);
+        sprintf(oled_screen[2], "Lon:%.4f ", telemetry_lon);
+        sprintf(oled_screen[3], "Alt:%d Cur%.1f", telemetry_alt, telemetry_current);
+        sprintf(oled_screen[4], "Pit:%d Rol:%d", telemetry_pitch, telemetry_roll);
+        sprintf(oled_screen[5], "Yaw:%d", telemetry_yaw);
+        break;
+      }
+      return true;
+    }
+} crsf_telemtry_data_s;
+
 void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData);

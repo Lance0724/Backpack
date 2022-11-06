@@ -22,12 +22,15 @@
 #include "devLED.h"
 
 #ifdef OLED
-  #include <U8g2lib.h>
+  // #include <U8g2lib.h>
+#include "devOLED.h"
 #endif
 
 #ifdef RELAY
   #include "telemetry.h"
   #include "crossfire.h"
+
+  extern crsf_telemtry_data_s crsf_tlm_data;
 #endif
 
 /////////// GLOBALS ///////////
@@ -45,9 +48,9 @@ unsigned long rebootTime = 0;
 bool cacheFull = false;
 bool sendCached = false;
 
-#ifdef OLED
-  U8G2_SH1107_128X80_F_HW_I2C u8g2(U8G2_R1, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ 22, /* data=*/21);
-#endif 
+// #ifdef OLED
+//   U8G2_SH1107_128X80_F_HW_I2C u8g2(U8G2_R1, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ 22, /* data=*/21);
+// #endif 
 
 #ifdef RELAY
 Telemetry telemetry;
@@ -55,6 +58,9 @@ Stream *_stream;
 #endif
 
 device_t *ui_devices[] = {
+#ifdef OLED
+  &OLED_device,
+#endif
 #ifdef PIN_LED
   &LED_device,
 #endif
@@ -316,6 +322,7 @@ void setup()
       }
     #endif
     esp_now_register_recv_cb(OnDataRecv);
+    crsf_tlm_data.init();
   }
 
   devicesStart();
@@ -324,40 +331,61 @@ void setup()
     connectionState = running;
   }
 
-  #ifdef OLED
-    u8g2.begin();
-    u8g2.enableUTF8Print(); // enable UTF8 support for the Arduino print() function
+  // #ifdef OLED
+  //   u8g2.begin();
+  //   u8g2.enableUTF8Print(); // enable UTF8 support for the Arduino print() function
    
-    u8g2.setFont(u8g2_font_unifont_t_chinese2); // use chinese2 for all the glyphs of "你好世界"
-    u8g2.setFontDirection(0);
-    u8g2.clearBuffer();
+  //   u8g2.setFont(u8g2_font_unifont_t_chinese2); // use chinese2 for all the glyphs of "你好世界"
+  //   u8g2.setFontDirection(0);
+  //   u8g2.clearBuffer();
 
-    u8g2.setCursor(0, 15);
-    u8g2.print("init...");
+  //   u8g2.setCursor(0, 30);
+  //   u8g2.print("init...");
 
-    // u8g2.clearBuffer();
-    u8g2.setContrast(150);
+  //   // u8g2.clearBuffer();
+  //   u8g2.setContrast(255);
 
-  #endif
+  // #endif
   DBGLN("Setup completed");
 }
 
-#ifdef OLED
-void ClearBox(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h)
-{
-    uint8_t color = u8g2.getDrawColor();
-    u8g2.setDrawColor(0);
-    u8g2.drawBox(x, y, w, h);
-    u8g2.setDrawColor(color);
-}
-#endif
+// #ifdef OLED
+// void ClearBox(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h)
+// {
+//     uint8_t color = u8g2.getDrawColor();
+//     u8g2.setDrawColor(0);
+//     u8g2.drawBox(x, y, w, h);
+//     u8g2.setDrawColor(color);
+// }
+// #endif
 
 void loop()
 {
-  #ifdef OLED
-    // u8g2.setCursor(0, 15);
-    // u8g2.print("Count:");
-  #endif
+  // #ifdef OLED
+#if 0
+    ClearBox(0, 0, 120, 80);
+    u8g2.setCursor(0, 12);
+    u8g2.print("TlmCnt:");
+    u8g2.print("9999");
+    u8g2.setCursor(0, 24);
+    u8g2.print("TlmCnt1:");
+    u8g2.print("9999");
+    u8g2.setCursor(0, 36);
+    u8g2.print("TlmCnt2:");
+    u8g2.print("9999");
+    u8g2.setCursor(0, 48);
+    u8g2.print("TlmCnt3:");
+    u8g2.print("9999");
+    u8g2.setCursor(0, 60);
+    u8g2.print("TlmCnt4:");
+    u8g2.print("9999");
+    u8g2.setCursor(0, 72);
+    u8g2.print("TlmCnt5:");
+    u8g2.print("9999");
+    u8g2.setCursor(80, 72);
+    u8g2.print("TTTT:");
+    u8g2.print("99");
+#endif
   uint32_t now = millis();
 
   devicesUpdate(now);
@@ -389,7 +417,8 @@ void loop()
         // nextPlayloadSize
         // nextPayload
         crossfireProcessData(nextPlayloadSize, nextPayload);
-        #ifdef OLED
+        // #ifdef OLED
+        #if 0
         ClearBox(0, 55, 90, 60);
         u8g2.setCursor(0, 15);
         u8g2.print("count");
@@ -398,9 +427,9 @@ void loop()
     }
   }
   
-  #ifdef OLED
-    u8g2.sendBuffer();
-  #endif
+  // #ifdef OLED
+  //   u8g2.sendBuffer();
+  // #endif
 #else
   if (Serial.available())
   {

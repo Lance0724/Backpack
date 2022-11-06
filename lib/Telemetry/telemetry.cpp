@@ -14,29 +14,6 @@ using namespace std;
 #else
 GENERIC_CRC8 crsf_crc(CRSF_CRC_POLY);
 
-int32_t telemetry_lat = 0;
-int32_t telemetry_lon = 0;
-int16_t telemetry_alt = 0;
-int16_t telemetry_sats = 0;
-int32_t telemetry_time = 0;
-int32_t telemetry_date = 0;
-int16_t telemetry_age = 0;
-
-
-uint8_t telemetry_failed_cs = 0;
-
-int16_t telemetry_voltage;
-float telemetry_current;
-
-float telemetry_course = 0.0f;
-float telemetry_speed = 0.0f;
-float telemetry_declination = 0.0f;
-float telemetry_hdop = 0.0f;
-
-float telemetry_pitch = 0.0f;
-float telemetry_roll = 0.0f;
-float telemetry_yaw = 0.0f;
-
 #endif 
 
 Telemetry::Telemetry()

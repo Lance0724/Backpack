@@ -11,7 +11,7 @@ static Button<PIN_BUTTON, false> button;
 extern unsigned long rebootTime;
 void RebootIntoWifi();
 
-static void shortPress()
+static void longPress()
 {
     if (connectionState == wifiUpdate)
     {
@@ -23,9 +23,16 @@ static void shortPress()
     }
 }
 
+extern void OledPageDown(uint8_t num);
+static void shortPress()
+{
+    OledPageDown(1);
+}
+
 static void initialize()
 {
-    button.OnLongPress = shortPress;
+    button.OnLongPress = longPress;
+    button.OnShortPress = shortPress;
 }
 
 static int start()

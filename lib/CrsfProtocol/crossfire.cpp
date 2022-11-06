@@ -8,28 +8,7 @@ extern GENERIC_CRC8 crsf_crc;
 
 extern U8G2_SH1107_128X80_F_HW_I2C u8g2;
 
-extern int32_t telemetry_lat;
-extern int32_t telemetry_lon;
-extern int16_t telemetry_alt;
-extern int16_t telemetry_sats;
-extern int32_t telemetry_time;
-extern int32_t telemetry_date;
-extern int16_t telemetry_age;
-
-extern int16_t telemetry_voltage;
-extern float telemetry_current;
-
-
-extern uint8_t telemetry_failed_cs;
-
-extern float telemetry_course;
-extern float telemetry_speed;
-extern float telemetry_declinationf;
-extern float telemetry_hdop;
-
-extern float telemetry_pitch;
-extern float telemetry_roll;
-extern float telemetry_yaw;
+crsf_telemtry_data_s crsf_tlm_data;
 
 #define TELEMETRY_RX_PACKET_SIZE       128
 static bool _lenIsSane(uint8_t len)
@@ -108,42 +87,42 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
     case CRSF_FRAMETYPE_GPS:
       if (getCrossfireTelemetryValue<4>(3, value, payloadData))
       {
-        telemetry_lat = value / 10;
+        crsf_tlm_data.telemetry_lat = value / 10;
         if (posCount == 0) {
           posCount++;
         }
       }
       if (getCrossfireTelemetryValue<4>(7, value, payloadData))
       {
-        telemetry_lon = value / 10;
+        crsf_tlm_data.telemetry_lon = value / 10;
         if (posCount == 0) {
           posCount++;
         }
       }
       if (getCrossfireTelemetryValue<2>(11, value, payloadData))
       {
-        telemetry_speed = (float)value;
+        crsf_tlm_data.telemetry_speed = (float)value;
       }
       if (getCrossfireTelemetryValue<2>(13, value, payloadData))
       {
-        telemetry_course = (float)value;
+        crsf_tlm_data.telemetry_course = (float)value;
       }
       if (getCrossfireTelemetryValue<2>(15, value, payloadData))
       {
-        telemetry_alt = (uint16_t) (value - 1000);
+        crsf_tlm_data.telemetry_alt = (uint16_t) (value - 1000);
         gotAlt = 1;
       }
       if (getCrossfireTelemetryValue<1>(17, value, payloadData))
       {
-        telemetry_sats = (uint16_t)value;
+        crsf_tlm_data.telemetry_sats = (uint16_t)value;
       }
       break;
     case CRSF_FRAMETYPE_BATTERY_SENSOR:
       if (getCrossfireTelemetryValue<2>(3, value, payloadData)){
-        telemetry_voltage = (uint16_t)value;
+        crsf_tlm_data.telemetry_voltage = (uint16_t)value;
       }
       if (getCrossfireTelemetryValue<2>(5, value, payloadData)){
-        telemetry_current = (float)value;
+        crsf_tlm_data.telemetry_current = (float)value;
 
       }
       if (getCrossfireTelemetryValue<3>(7, value, payloadData)){
@@ -177,27 +156,41 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
       break;
 
     case CRSF_FRAMETYPE_ATTITUDE:
-      // if (getCrossfireTelemetryValue<2>(3, value, payloadData))
+      if (getCrossfireTelemetryValue<2>(3, value, payloadData))
+      {
+        // Euler angles = telemetry_pitch * 180.0f / (1000 * 3.1415...)
+        crsf_tlm_data.telemetry_pitch = (int16_t)value;
+      }
       //   processCrossfireTelemetryValue(ATTITUDE_PITCH_INDEX, value/10);
-      // if (getCrossfireTelemetryValue<2>(5, value, payloadData))
+      if (getCrossfireTelemetryValue<2>(5, value, payloadData))
+      {
+        crsf_tlm_data.telemetry_roll = (int16_t)value;
+      }
       //   processCrossfireTelemetryValue(ATTITUDE_ROLL_INDEX, value/10);
-      // if (getCrossfireTelemetryValue<2>(7, value, payloadData))
+      if (getCrossfireTelemetryValue<2>(7, value, payloadData))
+      {
+        crsf_tlm_data.telemetry_yaw = (int16_t)value;
+      }
       //   processCrossfireTelemetryValue(ATTITUDE_YAW_INDEX, value/10);
       break;
 
     case CRSF_FRAMETYPE_FLIGHT_MODE:
     {
-      // const CrossfireSensor & sensor = crossfireSensors[FLIGHT_MODE_INDEX];
-      // auto textLength = min<int>(16, rxBuffer[1]);
-      // rxBuffer[textLength] = '\0';
-      // setTelemetryText(PROTOCOL_TELEMETRY_CROSSFIRE, sensor.id, 0, sensor.subId,
-      //                  (const char *)rxBuffer + 3);
-      
+      auto textLength = min<int>(16, rxBuffer[1]);
+      memset(crsf_tlm_data.telemtry_flightMode, 0, sizeof(crsf_tlm_data.telemtry_flightMode));
+      strncpy(crsf_tlm_data.telemtry_flightMode, (const char *)rxBuffer + 3, textLength);
     }
       break;
 
     default:
     break;
+  }
+
+  if (posCount == 2)
+  {
+    posCount = 0;
+    crsf_tlm_data.telemetry_gotFix = true;
+    // printf("Sats/Lat/Lon/Alt: %d %d %d %d\n", telemetry_sats, telemetry_lat, telemetry_lon, telemetry_alt);
   }
 #ifdef OLED
   // ClearBox(0, 25, 90, 10);
