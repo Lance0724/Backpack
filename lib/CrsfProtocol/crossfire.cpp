@@ -11,11 +11,11 @@ extern U8G2_SH1107_128X80_F_HW_I2C u8g2;
 crsf_telemtry_data_s crsf_tlm_data;
 
 #define TELEMETRY_RX_PACKET_SIZE       128
-static bool _lenIsSane(uint8_t len)
-{
-  // packet len must be at least 3 bytes (type+payload+crc) and 2 bytes < MAX (hdr+len)
-  return (len > 2 && len < TELEMETRY_RX_PACKET_SIZE-1);
-}
+// static bool _lenIsSane(uint8_t len)
+// {
+//   // packet len must be at least 3 bytes (type+payload+crc) and 2 bytes < MAX (hdr+len)
+//   return (len > 2 && len < TELEMETRY_RX_PACKET_SIZE-1);
+// }
 
 const CrossfireSensor crossfireSensors[] = {
     {CRSF_FRAMETYPE_LINK_STATISTICS,  0, "1RSS", UNIT_DB, 0},

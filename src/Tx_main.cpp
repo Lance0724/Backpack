@@ -29,8 +29,7 @@
 #ifdef RELAY
   #include "telemetry.h"
   #include "crossfire.h"
-
-  extern crsf_telemtry_data_s crsf_tlm_data;
+  #include "devCRSF.h"
 #endif
 
 /////////// GLOBALS ///////////
@@ -60,6 +59,7 @@ Stream *_stream;
 device_t *ui_devices[] = {
 #ifdef OLED
   &OLED_device,
+  &CRSF_device,
 #endif
 #ifdef PIN_LED
   &LED_device,
@@ -322,7 +322,6 @@ void setup()
       }
     #endif
     esp_now_register_recv_cb(OnDataRecv);
-    crsf_tlm_data.init();
   }
 
   devicesStart();
@@ -331,61 +330,11 @@ void setup()
     connectionState = running;
   }
 
-  // #ifdef OLED
-  //   u8g2.begin();
-  //   u8g2.enableUTF8Print(); // enable UTF8 support for the Arduino print() function
-   
-  //   u8g2.setFont(u8g2_font_unifont_t_chinese2); // use chinese2 for all the glyphs of "你好世界"
-  //   u8g2.setFontDirection(0);
-  //   u8g2.clearBuffer();
-
-  //   u8g2.setCursor(0, 30);
-  //   u8g2.print("init...");
-
-  //   // u8g2.clearBuffer();
-  //   u8g2.setContrast(255);
-
-  // #endif
   DBGLN("Setup completed");
 }
 
-// #ifdef OLED
-// void ClearBox(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h)
-// {
-//     uint8_t color = u8g2.getDrawColor();
-//     u8g2.setDrawColor(0);
-//     u8g2.drawBox(x, y, w, h);
-//     u8g2.setDrawColor(color);
-// }
-// #endif
-
 void loop()
 {
-  // #ifdef OLED
-#if 0
-    ClearBox(0, 0, 120, 80);
-    u8g2.setCursor(0, 12);
-    u8g2.print("TlmCnt:");
-    u8g2.print("9999");
-    u8g2.setCursor(0, 24);
-    u8g2.print("TlmCnt1:");
-    u8g2.print("9999");
-    u8g2.setCursor(0, 36);
-    u8g2.print("TlmCnt2:");
-    u8g2.print("9999");
-    u8g2.setCursor(0, 48);
-    u8g2.print("TlmCnt3:");
-    u8g2.print("9999");
-    u8g2.setCursor(0, 60);
-    u8g2.print("TlmCnt4:");
-    u8g2.print("9999");
-    u8g2.setCursor(0, 72);
-    u8g2.print("TlmCnt5:");
-    u8g2.print("9999");
-    u8g2.setCursor(80, 72);
-    u8g2.print("TTTT:");
-    u8g2.print("99");
-#endif
   uint32_t now = millis();
 
   devicesUpdate(now);
@@ -426,10 +375,7 @@ void loop()
         #endif
     }
   }
-  
-  // #ifdef OLED
-  //   u8g2.sendBuffer();
-  // #endif
+
 #else
   if (Serial.available())
   {

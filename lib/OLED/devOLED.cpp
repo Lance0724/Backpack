@@ -55,13 +55,18 @@ static int start()
   extern crsf_telemtry_data_s crsf_tlm_data;
 #endif
 
+extern connectionState_e connectionState;
+
 static int timeout()
 {
 #ifdef OLED
     ClearBox(0, 0, 120, 80);
-    bool result  = crsf_tlm_data.makeScreen(0);
-
-    if(result) {
+    if (connectionState == wifiUpdate)
+    {
+        u8g2.setCursor(0, 12);
+        u8g2.print("Wifi ...");
+    }
+    else if(crsf_tlm_data.en_screen) {
         for (size_t i = 0; i < 6; i++)
         {
             u8g2.setCursor(0, 12 * (i + 1));

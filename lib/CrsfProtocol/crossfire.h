@@ -99,6 +99,7 @@ typedef struct _crsf_telemtry_data_s
     char telemtry_flightMode[5];
 
     char oled_screen[6][30];
+    bool en_screen;
 
     void init()
     {
@@ -133,6 +134,7 @@ typedef struct _crsf_telemtry_data_s
     
     bool makeScreen(int page)
     {
+      en_screen = false;
       switch (page)
       {
       case 0:
@@ -147,6 +149,7 @@ typedef struct _crsf_telemtry_data_s
         sprintf(oled_screen[5], "Yaw:%d", telemetry_yaw);
         break;
       }
+      en_screen = true;
       return true;
     }
 } crsf_telemtry_data_s;
