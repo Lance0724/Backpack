@@ -23,10 +23,14 @@ static void longPress()
     }
 }
 
+#ifdef OLED
 extern void OledPageDown(uint8_t num);
+#endif
 static void shortPress()
 {
+#ifdef OLED
     OledPageDown(1);
+#endif
 }
 
 static void initialize()

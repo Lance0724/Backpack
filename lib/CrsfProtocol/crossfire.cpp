@@ -1,12 +1,6 @@
 #include "crossfire.h"
-#ifdef OLED
-  #include <U8g2lib.h>
-#endif
-
 
 extern GENERIC_CRC8 crsf_crc;
-
-extern U8G2_SH1107_128X80_F_HW_I2C u8g2;
 
 crsf_telemtry_data_s crsf_tlm_data;
 
@@ -64,14 +58,9 @@ bool getCrossfireTelemetryValue(uint8_t index, int32_t & value, uint8_t *payload
   return result;
 }
 
-#ifdef OLED
-extern void ClearBox(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h);
-#endif
-
 void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadData)
 {
   uint8_t posCount = 0;
-  uint8_t gotAlt = 0;
   uint8_t *rxBuffer = payloadData;
   uint8_t &rxBufferCount = nextPayloadSize;
 
@@ -101,6 +90,7 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
       }
       if (getCrossfireTelemetryValue<2>(11, value, payloadData))
       {
+        // (m/h +50m/h)/100
         crsf_tlm_data.telemetry_speed = (float)value;
       }
       if (getCrossfireTelemetryValue<2>(13, value, payloadData))
@@ -110,7 +100,7 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
       if (getCrossfireTelemetryValue<2>(15, value, payloadData))
       {
         crsf_tlm_data.telemetry_alt = (uint16_t) (value - 1000);
-        gotAlt = 1;
+        crsf_tlm_data.telemetry_gotAlt = true;
       }
       if (getCrossfireTelemetryValue<1>(17, value, payloadData))
       {
@@ -192,12 +182,6 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
     crsf_tlm_data.telemetry_gotFix = true;
     // printf("Sats/Lat/Lon/Alt: %d %d %d %d\n", telemetry_sats, telemetry_lat, telemetry_lon, telemetry_alt);
   }
-#ifdef OLED
-  // ClearBox(0, 25, 90, 10);
-  u8g2.setCursor(0, 35);
-  u8g2.print("ID:");
-  u8g2.printf("0x%x", id);
-#endif
 }
 
 
@@ -210,18 +194,10 @@ static bool _checkFrameCRC(uint8_t* rxBuffer)
 void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData)
 {
     if (_checkFrameCRC(payloadData)) {
-      #ifdef OLED
-        u8g2.setCursor(0, 55);
-        u8g2.print("Ok");
-      #endif
       processCrossfireTelemetryFrame(nextPayloadSize, payloadData);
     }
     else {
       // TRACE("[XF] CRC error ");
       // _seekStart(buffer, len); // adjusts len
-      #ifdef OLED
-        u8g2.setCursor(0, 55);
-        u8g2.print("Bad");
-      #endif
     }
 }

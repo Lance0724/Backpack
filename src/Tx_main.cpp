@@ -30,6 +30,7 @@
   #include "telemetry.h"
   #include "crossfire.h"
   #include "devCRSF.h"
+  #include "devLTM.h"
 #endif
 
 /////////// GLOBALS ///////////
@@ -60,6 +61,7 @@ device_t *ui_devices[] = {
 #ifdef OLED
   &OLED_device,
   &CRSF_device,
+  &LTM_device,
 #endif
 #ifdef PIN_LED
   &LED_device,
