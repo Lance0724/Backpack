@@ -18,7 +18,7 @@ static int start()
 
 static int timeout()
 {
-    bool result  = crsf_tlm_data.makeScreen(0);
+    crsf_tlm_data.makeScreen(0);
     return 200;
 }
 

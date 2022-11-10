@@ -40,28 +40,28 @@ extern crsf_telemtry_data_s crsf_tlm_data;
 // static serialPortConfig_t *portConfig;
 // static bool ltmEnabled;
 // static portSharing_e ltmPortSharing;
-static uint8_t ltmFrame[LTM_MAX_MESSAGE_SIZE];
+// static uint8_t ltmFrame[LTM_MAX_MESSAGE_SIZE];
 // static uint8_t ltm_x_counter;
 
-static void ltm_initialise_packet(sbuf_t *dst)
-{
-    dst->ptr = ltmFrame;
-    dst->end = ARRAYEND(ltmFrame);
+// static void ltm_initialise_packet(sbuf_t *dst)
+// {
+//     dst->ptr = ltmFrame;
+//     dst->end = ARRAYEND(ltmFrame);
 
-    sbufWriteU8(dst, '$');
-    sbufWriteU8(dst, 'T');
-}
+//     sbufWriteU8(dst, '$');
+//     sbufWriteU8(dst, 'T');
+// }
 
-static void ltm_finalise(sbuf_t *dst)
-{
-    uint8_t crc = 0;
-    for (const uint8_t *ptr = &ltmFrame[3]; ptr < dst->ptr; ++ptr) {
-        crc ^= *ptr;
-    }
-    sbufWriteU8(dst, crc);
-    sbufSwitchToReader(dst, ltmFrame);
-    // serialWriteBuf(ltmPort, sbufPtr(dst), sbufBytesRemaining(dst));
-}
+// static void ltm_finalise(sbuf_t *dst)
+// {
+//     uint8_t crc = 0;
+//     for (const uint8_t *ptr = &ltmFrame[3]; ptr < dst->ptr; ++ptr) {
+//         crc ^= *ptr;
+//     }
+//     sbufWriteU8(dst, crc);
+//     sbufSwitchToReader(dst, ltmFrame);
+//     // serialWriteBuf(ltmPort, sbufPtr(dst), sbufBytesRemaining(dst));
+// }
 
 /*
  * GPS G-frame 5Hhz at > 2400 baud
@@ -152,11 +152,6 @@ void ltm_gframe(sbuf_t *dst)
 // #endif
 //     sbufWriteU8(dst, (lt_flightmode << 2) | lt_statemode);
 // }
-
-#define M_PIf       3.14159265358979323846f
-#define RAD    (M_PIf / 180.0f)
-#define RADIANS10000_TO_DEGREES(VALUE) (VALUE*180.0f/(10000.0f*M_PIf))
-#define RADIANS10000_TO_DEGREES(VALUE) (VALUE/(1000.0f*RAD*10))
 /*
  * Attitude A-frame - 10 Hz at > 2400 baud
  *  PITCH ROLL HEADING
@@ -232,55 +227,55 @@ void ltm_aframe(sbuf_t *dst)
  * This is the normal (default) scheduler, needs c. 4800 baud or faster
  * Equates to c. 303 bytes / second
  */
-static uint8_t ltm_normal_schedule[LTM_SCHEDULE_SIZE] = {
-    LTM_BIT_AFRAME | LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_OFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_NFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_XFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_NFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_NFRAME
-};
+// static uint8_t ltm_normal_schedule[LTM_SCHEDULE_SIZE] = {
+//     LTM_BIT_AFRAME | LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_OFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_NFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_XFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_NFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME | LTM_BIT_NFRAME
+// };
 
 /*
  * This is the medium scheduler, needs c. 2400 baud or faster
  * Equates to c. 164 bytes / second
  */
-static uint8_t ltm_medium_schedule[LTM_SCHEDULE_SIZE] = {
-    LTM_BIT_AFRAME,
-    LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME,
-    LTM_BIT_OFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_XFRAME,
-    LTM_BIT_OFRAME,
-    LTM_BIT_AFRAME | LTM_BIT_SFRAME,
-    LTM_BIT_GFRAME,
-    LTM_BIT_AFRAME,
-    LTM_BIT_NFRAME
-};
+// static uint8_t ltm_medium_schedule[LTM_SCHEDULE_SIZE] = {
+//     LTM_BIT_AFRAME,
+//     LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME,
+//     LTM_BIT_OFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_XFRAME,
+//     LTM_BIT_OFRAME,
+//     LTM_BIT_AFRAME | LTM_BIT_SFRAME,
+//     LTM_BIT_GFRAME,
+//     LTM_BIT_AFRAME,
+//     LTM_BIT_NFRAME
+// };
 
 /*
  * This is the slow scheduler, needs c. 1200 baud or faster
  * Equates to c. 105 bytes / second (91 b/s if the second GFRAME is zeroed)
  */
-static uint8_t ltm_slow_schedule[LTM_SCHEDULE_SIZE] = {
-    LTM_BIT_GFRAME,
-    LTM_BIT_SFRAME,
-    LTM_BIT_AFRAME,
-    0,
-    LTM_BIT_OFRAME,
-    LTM_BIT_XFRAME,
-    LTM_BIT_GFRAME, // consider zeroing this for even lower bytes/sec
-    0,
-    LTM_BIT_AFRAME,
-    LTM_BIT_NFRAME,
-};
+// static uint8_t ltm_slow_schedule[LTM_SCHEDULE_SIZE] = {
+//     LTM_BIT_GFRAME,
+//     LTM_BIT_SFRAME,
+//     LTM_BIT_AFRAME,
+//     0,
+//     LTM_BIT_OFRAME,
+//     LTM_BIT_XFRAME,
+//     LTM_BIT_GFRAME, // consider zeroing this for even lower bytes/sec
+//     0,
+//     LTM_BIT_AFRAME,
+//     LTM_BIT_NFRAME,
+// };
 
-/* Set by initialisation */
-static uint8_t *ltm_schedule;
+// /* Set by initialisation */
+// static uint8_t *ltm_schedule;
 
 // static void process_ltm(void)
 // {

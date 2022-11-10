@@ -58,11 +58,10 @@ bool getCrossfireTelemetryValue(uint8_t index, int32_t & value, uint8_t *payload
   return result;
 }
 
-void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadData)
+void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadData, uint32_t now)
 {
   uint8_t posCount = 0;
   uint8_t *rxBuffer = payloadData;
-  uint8_t &rxBufferCount = nextPayloadSize;
 
   uint8_t crsfPayloadLen = rxBuffer[1];
   uint8_t id = rxBuffer[2];
@@ -166,7 +165,7 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
 
     case CRSF_FRAMETYPE_FLIGHT_MODE:
     {
-      auto textLength = min<int>(16, rxBuffer[1]);
+      auto textLength = min<int>(16, crsfPayloadLen);
       memset(crsf_tlm_data.telemtry_flightMode, 0, sizeof(crsf_tlm_data.telemtry_flightMode));
       strncpy(crsf_tlm_data.telemtry_flightMode, (const char *)rxBuffer + 3, textLength);
     }
@@ -180,8 +179,11 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
   {
     posCount = 0;
     crsf_tlm_data.telemetry_gotFix = true;
+    crsf_tlm_data.last_update = now;
     // printf("Sats/Lat/Lon/Alt: %d %d %d %d\n", telemetry_sats, telemetry_lat, telemetry_lon, telemetry_alt);
   }
+  
+    // crsf_tlm_data.last_update = now;
 }
 
 
@@ -191,10 +193,10 @@ static bool _checkFrameCRC(uint8_t* rxBuffer)
   return (crc == rxBuffer[rxBuffer[CRSF_TELEMETRY_LENGTH_INDEX]+1]);
 }
 
-void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData)
+void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData, uint32_t now)
 {
     if (_checkFrameCRC(payloadData)) {
-      processCrossfireTelemetryFrame(nextPayloadSize, payloadData);
+      processCrossfireTelemetryFrame(nextPayloadSize, payloadData, now);
     }
     else {
       // TRACE("[XF] CRC error ");

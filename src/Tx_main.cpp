@@ -367,14 +367,7 @@ void loop()
     {
         // nextPlayloadSize
         // nextPayload
-        crossfireProcessData(nextPlayloadSize, nextPayload);
-        // #ifdef OLED
-        #if 0
-        ClearBox(0, 55, 90, 60);
-        u8g2.setCursor(0, 15);
-        u8g2.print("count");
-        u8g2.print(telemetry.ReceivedPackagesCount());
-        #endif
+        crossfireProcessData(nextPlayloadSize, nextPayload, now);
     }
   }
 

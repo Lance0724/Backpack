@@ -68,10 +68,14 @@ struct CrossfireSensor {
   const uint8_t precision;
 };
 
+#define M_PIf       3.14159265358979323846f
+#define RAD    (M_PIf / 180.0f)
+#define RADIANS10000_TO_DEGREES(VALUE) (VALUE/(1000.0f*RAD*10))
 
 typedef struct _crsf_telemtry_data_s
 {
     // handled
+    uint32_t last_update;
     bool telemetry_gotFix;
     bool telemetry_gotAlt;
     int32_t telemetry_lat;
@@ -104,6 +108,7 @@ typedef struct _crsf_telemtry_data_s
 
     void init()
     {
+        last_update = 0;
         telemetry_gotFix = false;
         telemetry_gotAlt = false;
         telemetry_lat = 0;
@@ -118,8 +123,8 @@ typedef struct _crsf_telemtry_data_s
 
         telemetry_failed_cs = 0;
 
-        telemetry_voltage;
-        telemetry_current;
+        telemetry_voltage = 0;
+        telemetry_current = 0.0f;
 
         telemetry_course = 0.0f;
         telemetry_speed = 0.0f;
@@ -144,11 +149,11 @@ typedef struct _crsf_telemtry_data_s
         // break;
       default:
         sprintf(oled_screen[0], "Fix:%c Sta:%d Vol%d", telemetry_gotFix&&telemetry_gotAlt?'Y':'N',telemetry_sats, telemetry_voltage);
-        sprintf(oled_screen[1], "Lat:%.4f ", telemetry_lat);
-        sprintf(oled_screen[2], "Lon:%.4f ", telemetry_lon);
+        sprintf(oled_screen[1], "Lat:%d ", telemetry_lat);
+        sprintf(oled_screen[2], "Lon:%d ", telemetry_lon);
         sprintf(oled_screen[3], "Alt:%d Cur%.1f", telemetry_alt, telemetry_current);
-        sprintf(oled_screen[4], "Pit:%d Rol:%d", telemetry_pitch, telemetry_roll);
-        sprintf(oled_screen[5], "Yaw:%d", telemetry_yaw);
+        sprintf(oled_screen[4], "Pit:%.2f Rol:%.2f", RADIANS10000_TO_DEGREES(telemetry_pitch), RADIANS10000_TO_DEGREES(telemetry_roll));
+        sprintf(oled_screen[5], "Yaw:%.2f", RADIANS10000_TO_DEGREES(telemetry_yaw));
         break;
       }
       en_screen = true;
@@ -156,4 +161,4 @@ typedef struct _crsf_telemtry_data_s
     }
 } crsf_telemtry_data_s;
 
-void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData);
+void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData, uint32_t now);
