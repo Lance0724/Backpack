@@ -45,7 +45,7 @@ static int timeout()
     uint32_t now = millis();
     static uint8_t ltm_scheduler;
 
-    if (500 < now - crsf_tlm_data.last_update) {
+    if (now - crsf_tlm_data.last_update > 1000) {
         return 100;
     }
 
