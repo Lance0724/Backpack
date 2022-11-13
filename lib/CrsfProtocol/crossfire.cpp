@@ -179,11 +179,11 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
   {
     posCount = 0;
     crsf_tlm_data.telemetry_gotFix = true;
-    crsf_tlm_data.last_update = now;
+    // crsf_tlm_data.last_update = now;
     // printf("Sats/Lat/Lon/Alt: %d %d %d %d\n", telemetry_sats, telemetry_lat, telemetry_lon, telemetry_alt);
   }
   
-    // crsf_tlm_data.last_update = now;
+  crsf_tlm_data.last_update = now;
 }
 
 

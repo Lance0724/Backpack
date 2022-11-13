@@ -9,6 +9,10 @@
   #include <WiFi.h>
 #endif
 
+#ifdef OLED
+#include "devOLED.h"
+#endif
+
 
 #include "msp.h"
 #include "msptypes.h"
@@ -69,6 +73,9 @@ bool gotInitialPacket = false;
 uint32_t lastSentRequest = 0;
 
 device_t *ui_devices[] = {
+#ifdef OLED
+  &OLED_device,
+#endif
 #ifdef PIN_LED
   &LED_device,
 #endif
@@ -215,7 +222,7 @@ void ProcessMSPPacket(mspPacket_t *packet)
       uint8_t lowByte = packet->readByte();
       uint8_t highByte = packet->readByte();
       uint16_t delay = lowByte | highByte << 8;
-      vrxModule.SetRecordingState(state, delay);
+      // vrxModule.SetRecordingState(state, delay);
     }
     break;
   default:
@@ -238,7 +245,7 @@ void SetupEspNow()
       esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
     #elif defined(PLATFORM_ESP32)
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-      peerInfo.channel = 0;
+      peerInfo.channel = 1;
       peerInfo.encrypt = false;
       if (esp_now_add_peer(&peerInfo) != ESP_OK)
       {
@@ -248,6 +255,7 @@ void SetupEspNow()
     #endif
 
     esp_now_register_recv_cb(OnDataRecv);
+    DBGLN("esp_now_register_recv_cb(OnDataRecv)");
 }
 
 void SetSoftMACAddress()
@@ -399,7 +407,7 @@ void setup()
     connectionState = running;
   }
 
-  vrxModule.Init();
+  // vrxModule.Init();
   #if defined(HDZERO_BACKPACK)
     Serial.begin(VRX_UART_BAUD);
   #endif
@@ -411,7 +419,7 @@ void loop()
   uint32_t now = millis();
 
   devicesUpdate(now);
-  vrxModule.Loop(now);
+  // vrxModule.Loop(now);
 
   #if defined(PLATFORM_ESP8266) || defined(PLATFORM_ESP32)
     // If the reboot time is set and the current time is past the reboot time then reboot.
@@ -434,7 +442,7 @@ void loop()
   if (sendChangesToVrx)
   {
     sendChangesToVrx = false;
-    vrxModule.SendIndexCmd(cachedIndex);
+    // vrxModule.SendIndexCmd(cachedIndex);
   }
   
   // spam out a bunch of requests for the desired band/channel for the first 5s

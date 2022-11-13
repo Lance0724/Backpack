@@ -22,7 +22,6 @@
 #include "devLED.h"
 
 #ifdef OLED
-  // #include <U8g2lib.h>
 #include "devOLED.h"
 #endif
 
@@ -60,6 +59,8 @@ Stream *_stream;
 device_t *ui_devices[] = {
 #ifdef OLED
   &OLED_device,
+#endif
+#ifdef RELAY
   &CRSF_device,
   &LTM_device,
 #endif
@@ -266,11 +267,16 @@ RF_PRE_INIT()
 }
 #endif
 
+void send_cb(u8 *mac_addr, u8 status)
+{
+  DBGLN("send_cb %d", status); // Debug prints
+}
+
 void setup()
 {
   #ifdef DEBUG_LOG
-    Serial1.begin(115200);
-    Serial1.setDebugOutput(true);
+    Serial.begin(460800);
+    Serial.setDebugOutput(true);
   #endif
 #ifdef AXIS_THOR_TX_BACKPACK
   Serial.begin(420000);
@@ -278,8 +284,13 @@ void setup()
   #ifndef RELAY
     Serial.begin(460800);
   #else
-    Serial1.begin(460800);
-    _stream = &Serial1;
+    #if defined(PLATFORM_ESP8266)
+      Serial.begin(460800);
+      _stream = &Serial;
+    #elif defined(PLATFORM_ESP32)
+      Serial1.begin(460800);
+      _stream = &Serial1;
+    #endif
   #endif
 #endif
 
@@ -309,6 +320,10 @@ void setup()
       DBGLN("Error initializing ESP-NOW");
       rebootTime = millis();
     }
+    else
+    {
+      DBGLN("initializing ESP-NOW OK");
+    }
 
     #if defined(PLATFORM_ESP8266)
       esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
@@ -322,8 +337,13 @@ void setup()
         DBGLN("ESP-NOW failed to add peer");
         return;
       }
+      else 
+      {
+        DBGLN("ESP-NOW add peer");
+      }
     #endif
     esp_now_register_recv_cb(OnDataRecv);
+    esp_now_register_send_cb(send_cb);
   }
 
   devicesStart();
@@ -335,8 +355,29 @@ void setup()
   DBGLN("Setup completed");
 }
 
+// void sendLTMViaEspnowNew(uint8_t *data, size_t len)
+// {
+//     for (int i = 0; i < len; i++)
+//     {
+//       DBG("%x", data[i]); // Debug prints
+//       DBG(".");
+//     }
+//   esp_now_send(broadcastAddress, data, len);
+//   DBGLN("");
+  
+//   for (int i = 0; i < 6; i++)
+//   {
+//     DBG("%x", broadcastAddress[i]); // Debug prints
+//     DBG(".");
+//   }
+//   DBGLN("");
+
+//   blinkLED();
+// }
+
 void loop()
 {
+  // static char art[10] = "ABC";
   uint32_t now = millis();
 
   devicesUpdate(now);
@@ -365,6 +406,7 @@ void loop()
     uint8_t nextPlayloadSize = 0;
     if (telemetry.GetNextPayload(&nextPlayloadSize, &nextPayload))
     {
+        // sendLTMViaEspnowNew((uint8_t *)art, 3);
         // nextPlayloadSize
         // nextPayload
         crossfireProcessData(nextPlayloadSize, nextPayload, now);

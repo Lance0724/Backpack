@@ -12,6 +12,7 @@
   #include <esp_wifi.h>
   #include <WiFi.h>
 #endif
+#include "logging.h"
 
 extern crsf_telemtry_data_s crsf_tlm_data;
 
@@ -22,20 +23,39 @@ uint8_t LTMbroadcastAddress[6] = {0, 0, 0, 0, 0, 0};
 #endif
 
 
+
 static void initialize()
 {
     // crsf_tlm_data.init();
+    // DBGLN("esp_now_register_send_cb"); // Debug prints
+    
 }
 
 static int start()
 {
+    DBG("devLTM.cpp");
     // 200ms begin to refresh
-    return 200;
+    // MAC address can only be set with unicast, so first byte must be even, not odd
+    LTMbroadcastAddress[0] = LTMbroadcastAddress[0] & ~0x01;
+    
+    for (int i = 0; i < 6; i++)
+    {
+      DBG("%x", LTMbroadcastAddress[i]); // Debug prints
+      DBG(",");
+    }
+
+    return 5000;
 }
 
 void sendLTMViaEspnow(uint8_t *data, size_t len)
 {
+    for (int i = 0; i < len; i++)
+    {
+      DBG("%x", data[i]); // Debug prints
+      DBG(",");
+    }
   esp_now_send(LTMbroadcastAddress, data, len);
+  DBGLN("");
 
   blinkLED();
 }
@@ -46,6 +66,8 @@ static int timeout()
     static uint8_t ltm_scheduler;
 
     if (now - crsf_tlm_data.last_update > 1000) {
+        DBGLN("%s %d", __FILE__, __LINE__);
+        DBGLN("now%d last_update%d", now, crsf_tlm_data.last_update);
         return 100;
     }
 
