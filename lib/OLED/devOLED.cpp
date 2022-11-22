@@ -52,7 +52,7 @@ static int start()
 #ifdef RELAY
   #include "telemetry.h"
   #include "crossfire.h"
-  extern crsf_telemtry_data_s crsf_tlm_data;
+  extern crsf_telemetry_data_s crsf_tlm_data;
 #endif
 
 extern connectionState_e connectionState;
@@ -66,35 +66,15 @@ static int timeout()
         u8g2.setCursor(0, 12);
         u8g2.print("Wifi ...");
     }
+#if defined(RELAY)
     else if(crsf_tlm_data.en_screen) {
         for (size_t i = 0; i < 6; i++)
         {
             u8g2.setCursor(0, 12 * (i + 1));
             u8g2.print(crsf_tlm_data.oled_screen[i]);
         }
-        
-        // u8g2.print(pScreen);
     }
-    // u8g2.print("9999");
-    // u8g2.setCursor(0, 24);
-    // u8g2.print("Cnt1:");
-    // u8g2.print("9999");
-    // u8g2.setCursor(0, 36);
-    // u8g2.print("TlmCnt2:");
-    // u8g2.print("9999");
-    // u8g2.setCursor(0, 48);
-    // u8g2.print("TlmCnt3:");
-    // u8g2.print("9999");
-    // u8g2.setCursor(0, 60);
-    // u8g2.print("TlmCnt4:");
-    // u8g2.print("9999");
-    // u8g2.setCursor(0, 72);
-    // u8g2.print("TlmCnt5:");
-    // u8g2.print("9999");
-    // u8g2.setCursor(80, 72);
-    // u8g2.print("TTTT:");
-    // u8g2.print("99");
-
+#endif
     u8g2.sendBuffer();
 #endif
     return 200;

@@ -11,6 +11,11 @@
 
 #ifdef OLED
 #include "devOLED.h"
+#include "devCRSF.h"
+#endif
+
+#if defined(RELAY)
+#include "ltmParse.h"
 #endif
 
 
@@ -75,6 +80,7 @@ uint32_t lastSentRequest = 0;
 device_t *ui_devices[] = {
 #ifdef OLED
   &OLED_device,
+  &CRSF_device,
 #endif
 #ifdef PIN_LED
   &LED_device,
@@ -140,7 +146,44 @@ void OnDataRecv(uint8_t * mac_addr, uint8_t *data, uint8_t data_len)
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int data_len)
 #endif
 {
-  DBGLN("ESP NOW DATA:");
+  // DBGLN("ESP NOW DATA:");
+  for (int i = 0; i < data_len; i++)
+  {
+    // DBG("%x", data[i]); // Debug prints
+    // DBG(",");
+
+    // serial.output
+    Serial1.write(data[i]);
+
+#ifdef OLED
+    if (ltm_encodeTargetData(data[i]))
+    {
+      DBGLN(""); // Extra line for serial output readability
+      // Finished processing a complete packet
+      // Only process packets from a bound MAC address
+      if (connectionState == binding ||
+          (broadcastAddress[0] == mac_addr[0] &&
+           broadcastAddress[1] == mac_addr[1] &&
+           broadcastAddress[2] == mac_addr[2] &&
+           broadcastAddress[3] == mac_addr[3] &&
+           broadcastAddress[4] == mac_addr[4] &&
+           broadcastAddress[5] == mac_addr[5]))
+      {
+        gotInitialPacket = true;
+        parseLTM_GFRAME(millis());
+
+        // TODO 
+        // OLED output LTM
+      }
+      else
+      {
+        DBGLN("Failed MAC add check and not in bindingMode.");
+      }
+    }
+#endif
+  }
+  blinkLED();
+#if 0  
   for(int i = 0; i < data_len; i++)
   {
     DBG("%x", data[i]); // Debug prints
@@ -172,7 +215,7 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int data_len)
       msp.markPacketReceived();
     }
   }
-  blinkLED();
+#endif
 }
 
 void ProcessMSPPacket(mspPacket_t *packet)

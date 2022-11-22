@@ -2,8 +2,9 @@
 #include "common.h"
 #include "device.h"
 #include "crossfire.h"
+#include "logging.h"
 
-extern crsf_telemtry_data_s crsf_tlm_data;
+extern crsf_telemetry_data_s crsf_tlm_data;
 
 static void initialize()
 {
@@ -19,6 +20,7 @@ static int start()
 static int timeout()
 {
     crsf_tlm_data.makeScreen(0);
+    DBGLN("%s", crsf_tlm_data.oled_screen[4]);
     return 200;
 }
 
@@ -30,7 +32,7 @@ static int timeout()
 device_t CRSF_device = {
     .initialize = initialize,
     // .start = event,
-    .start = NULL,
-    .event = start,
+    .start = start,
+    .event = NULL,
     .timeout = timeout
 };

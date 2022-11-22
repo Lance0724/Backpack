@@ -72,8 +72,16 @@ struct CrossfireSensor {
 #define RAD    (M_PIf / 180.0f)
 #define RADIANS10000_TO_DEGREES(VALUE) (VALUE/(1000.0f*RAD*10))
 
-typedef struct _crsf_telemtry_data_s
+typedef enum
 {
+    crossfire,
+    ltm,
+    FAILURE_TYPES
+} telemetry_type_e;
+
+typedef struct _crsf_telemetry_data_s
+{
+    telemetry_type_e telemetry_type;
     // handled
     uint32_t last_update;
     bool telemetry_gotFix;
@@ -82,6 +90,7 @@ typedef struct _crsf_telemtry_data_s
     int32_t telemetry_lon;
     int16_t telemetry_alt;
     int16_t telemetry_sats;
+    uint8_t gps_fix_type;
 
     // not handle
     int32_t telemetry_time;
@@ -101,6 +110,11 @@ typedef struct _crsf_telemtry_data_s
     int16_t telemetry_pitch;
     int16_t telemetry_roll;
     int16_t telemetry_yaw;
+
+    float telemetry_ltm_pitch;
+    float telemetry_ltm_roll;
+    float telemetry_ltm_yaw;
+
     char telemtry_flightMode[5];
 
     char oled_screen[6][30];
@@ -108,6 +122,11 @@ typedef struct _crsf_telemtry_data_s
 
     void init()
     {
+#ifdef TARGET_TX_BACKPACK
+        telemetry_type = crossfire;
+#else
+        telemetry_type = ltm;
+#endif
         last_update = 0;
         telemetry_gotFix = false;
         telemetry_gotAlt = false;
@@ -115,6 +134,7 @@ typedef struct _crsf_telemtry_data_s
         telemetry_lon = 0;
         telemetry_alt = 0;
         telemetry_sats = 0;
+        gps_fix_type = 0;
 
         // not handle
         telemetry_time = 0;
@@ -134,6 +154,10 @@ typedef struct _crsf_telemtry_data_s
         telemetry_pitch = 0;
         telemetry_roll = 0;
         telemetry_yaw = 0;
+
+        telemetry_ltm_pitch = 0;
+        telemetry_ltm_roll = 0;
+        telemetry_ltm_yaw = 0;
         
         memset(telemtry_flightMode, 0, sizeof(telemtry_flightMode));
         memset(oled_screen, 0, sizeof(oled_screen));
@@ -142,12 +166,9 @@ typedef struct _crsf_telemtry_data_s
     bool makeScreen(int page)
     {
       en_screen = false;
-      switch (page)
+      switch (telemetry_type)
       {
-      case 0:
-        // /* code */
-        // break;
-      default:
+      case crossfire:
         sprintf(oled_screen[0], "Fix:%c Sta:%d Vol%d", telemetry_gotFix&&telemetry_gotAlt?'Y':'N',telemetry_sats, telemetry_voltage);
         sprintf(oled_screen[1], "Lat:%d ", telemetry_lat);
         sprintf(oled_screen[2], "Lon:%d ", telemetry_lon);
@@ -155,10 +176,20 @@ typedef struct _crsf_telemtry_data_s
         sprintf(oled_screen[4], "Pit:%.2f Rol:%.2f", RADIANS10000_TO_DEGREES(telemetry_pitch), RADIANS10000_TO_DEGREES(telemetry_roll));
         sprintf(oled_screen[5], "Yaw:%.2f", RADIANS10000_TO_DEGREES(telemetry_yaw));
         break;
+      case ltm:
+        sprintf(oled_screen[0], "Fix:%c Sta:%d Vol%d", telemetry_gotFix&&telemetry_gotAlt?'Y':'N',telemetry_sats, telemetry_voltage);
+        sprintf(oled_screen[1], "Lat:%d ", telemetry_lat);
+        sprintf(oled_screen[2], "Lon:%d ", telemetry_lon);
+        sprintf(oled_screen[3], "Alt:%d Cur%.1f", telemetry_alt, telemetry_current);
+        sprintf(oled_screen[4], "Pit:%.2f Rol:%.2f", telemetry_ltm_pitch, telemetry_ltm_roll);
+        sprintf(oled_screen[5], "Yaw:%.2f", telemetry_ltm_yaw);
+        break;
+      default:
+        break;
       }
       en_screen = true;
       return true;
     }
-} crsf_telemtry_data_s;
+} crsf_telemetry_data_s;
 
 void crossfireProcessData(uint8_t nextPayloadSize, uint8_t *payloadData, uint32_t now);

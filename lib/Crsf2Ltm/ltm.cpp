@@ -34,7 +34,7 @@
 #define LTM_CYCLETIME   100
 #define LTM_SCHEDULE_SIZE (1000/LTM_CYCLETIME)
 
-extern crsf_telemtry_data_s crsf_tlm_data;
+extern crsf_telemetry_data_s crsf_tlm_data;
 
 // static serialPort_t *ltmPort;
 // static serialPortConfig_t *portConfig;
@@ -418,6 +418,9 @@ int getLtmFrame(uint8_t *frame, ltm_frame_e ltmFrameType)
     sbuf_t ltmFrameBuf = { .ptr = ltmFrame, .end =ARRAYEND(ltmFrame) };
     sbuf_t * const sbuf = &ltmFrameBuf;
 
+    sbufWriteU8(sbuf, '$');
+    sbufWriteU8(sbuf, 'T');
+
     switch (ltmFrameType) {
     default:
     case LTM_AFRAME:
@@ -439,6 +442,13 @@ int getLtmFrame(uint8_t *frame, ltm_frame_e ltmFrameType)
     //     ltm_nframe(sbuf);
     //     break;
     }
+    
+    uint8_t crc = 0;
+    for (const uint8_t *ptr = &ltmFrame[3]; ptr < sbuf->ptr; ++ptr) {
+        crc ^= *ptr;
+    }
+    sbufWriteU8(sbuf, crc);
+    
     sbufSwitchToReader(sbuf, ltmFrame);
     const int frameSize = sbufBytesRemaining(sbuf);
     for (int ii = 0; sbufBytesRemaining(sbuf); ++ii) {

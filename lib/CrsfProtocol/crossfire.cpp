@@ -2,7 +2,7 @@
 
 extern GENERIC_CRC8 crsf_crc;
 
-crsf_telemtry_data_s crsf_tlm_data;
+crsf_telemetry_data_s crsf_tlm_data;
 
 #define TELEMETRY_RX_PACKET_SIZE       128
 // static bool _lenIsSane(uint8_t len)
