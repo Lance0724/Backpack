@@ -53,12 +53,11 @@ void sendLTMViaEspnow(uint8_t *data, size_t len)
   }
   esp_now_send(LTMbroadcastAddress, data, len);
   DBGLN("");
-
-  blinkLED();
 }
 
 static int timeout()
 {
+  static bool bSend = false;
   uint32_t now = millis();
   static uint8_t ltm_scheduler;
 
@@ -66,7 +65,15 @@ static int timeout()
   {
     DBGLN("%s %d", __FILE__, __LINE__);
     DBGLN("now%d last_update%d", now, crsf_tlm_data.last_update);
+    turnOffLED();
+    bSend = false;
     return 100;
+  }
+  
+  if (bSend == false )
+  {
+    blinkLED();
+    bSend = true;
   }
 
   static uint8_t ltmFrame[LTM_MAX_MESSAGE_SIZE];

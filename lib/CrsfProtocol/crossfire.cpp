@@ -60,6 +60,7 @@ bool getCrossfireTelemetryValue(uint8_t index, int32_t & value, uint8_t *payload
 
 void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadData, uint32_t now)
 {
+  bool bTelemData = true;
   uint8_t posCount = 0;
   uint8_t *rxBuffer = payloadData;
 
@@ -172,6 +173,7 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
       break;
 
     default:
+      bTelemData = false;
     break;
   }
 
@@ -183,7 +185,9 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
     // printf("Sats/Lat/Lon/Alt: %d %d %d %d\n", telemetry_sats, telemetry_lat, telemetry_lon, telemetry_alt);
   }
   
-  crsf_tlm_data.last_update = now;
+  if (bTelemData == true) {
+    crsf_tlm_data.last_update = now;
+  }
 }
 
 
