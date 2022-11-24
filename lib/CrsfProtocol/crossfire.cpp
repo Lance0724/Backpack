@@ -76,14 +76,14 @@ void processCrossfireTelemetryFrame(uint8_t nextPayloadSize, uint8_t *payloadDat
     case CRSF_FRAMETYPE_GPS:
       if (getCrossfireTelemetryValue<4>(3, value, payloadData))
       {
-        crsf_tlm_data.telemetry_lat = value / 10;
+        crsf_tlm_data.telemetry_lat = value;
         if (posCount == 0) {
           posCount++;
         }
       }
       if (getCrossfireTelemetryValue<4>(7, value, payloadData))
       {
-        crsf_tlm_data.telemetry_lon = value / 10;
+        crsf_tlm_data.telemetry_lon = value;
         if (posCount == 0) {
           posCount++;
         }

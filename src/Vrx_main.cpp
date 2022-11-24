@@ -153,7 +153,11 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int data_len)
     // DBG(",");
 
     // serial.output
+#if defined(PLATFORM_ESP8266)
+    Serial.write(data[i]);
+#elif defined(PLATFORM_ESP32)
     Serial1.write(data[i]);
+#endif
 
 #ifdef OLED
     if (ltm_encodeTargetData(data[i]))
@@ -453,6 +457,10 @@ void setup()
   // vrxModule.Init();
   #if defined(HDZERO_BACKPACK)
     Serial.begin(VRX_UART_BAUD);
+  #endif
+
+  #if defined(TARGET_TLMRX_BACKPACK)
+    Serial.begin(TLM_UART_BAUD);
   #endif
   DBGLN("Setup completed");
 }
