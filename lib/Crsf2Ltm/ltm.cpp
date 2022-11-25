@@ -91,8 +91,8 @@ void ltm_gframe(sbuf_t *dst)
     ltm_alt = crsf_tlm_data.telemetry_alt * 100; // m to cm
 
     sbufWriteU8(dst, 'G');
-    sbufWriteU32(dst, ltm_lat);
-    sbufWriteU32(dst, ltm_lon);
+    sbufWriteU32(dst, ltm_lat * 10);
+    sbufWriteU32(dst, ltm_lon * 10);
     sbufWriteU8(dst, (uint8_t)ltm_gs);
     sbufWriteU32(dst, ltm_alt);
     sbufWriteU8(dst, (crsf_tlm_data.telemetry_sats << 2) | gps_fix_type);
